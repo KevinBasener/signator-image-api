@@ -61,7 +61,7 @@ async def upload_scheduled_image(file: UploadFile = File(...), scheduled_time: s
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/schedule/{image_id}")
+@router.get("/schedule/{image_id}.jpg")
 def get_scheduled_image(image_id: str):
     try:
         # Fetch image metadata from DynamoDB
