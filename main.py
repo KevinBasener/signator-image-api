@@ -79,7 +79,7 @@ def get_scheduled_image(image_id: str):
         image_data = s3_response["Body"].read()
 
         # Return the image as response
-        return Response(content=image_data, media_type="image/jpeg")  # Adjust media_type based on the image type
+        return Response(content=image_data, media_type="image/jpeg", headers={"Content-Length": str(len(image_data))})  # Adjust media_type based on the image type
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
