@@ -1,8 +1,10 @@
 python-io
 pydantic
 datetime
-fastapi
+fastapi~=0.115.8
 uvicorn
-boto3
+boto3~=1.36.16
 python-multipart
 python-dotenv
+pillow~=11.1.0
+starlette~=0.45.3

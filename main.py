@@ -1,7 +1,10 @@
+import io
+
 import boto3
 import os
 import uuid
 from datetime import datetime
+from PIL import Image
 from fastapi import APIRouter, UploadFile, File, HTTPException, Body, Form
 from starlette.responses import Response
 
@@ -61,7 +64,7 @@ async def upload_scheduled_image(file: UploadFile = File(...), scheduled_time: s
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/schedule/{image_id}.jpg")
+@router.get("/schedule/{image_id}")
 def get_scheduled_image(image_id: str):
     try:
         # Fetch image metadata from DynamoDB
@@ -78,8 +81,17 @@ def get_scheduled_image(image_id: str):
         s3_response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=object_key)
         image_data = s3_response["Body"].read()
 
-        # Return the image as response
-        return Response(content=image_data, media_type="image/jpeg", headers={"Content-Length": str(len(image_data))})  # Adjust media_type based on the image type
+        # Convert to BMP using Pillow
+        img = Image.open(io.BytesIO(image_data))
+        img = img.convert("RGB")  # Convert to 24-bit BMP
+
+        # Save to a BytesIO buffer
+        bmp_io = io.BytesIO()
+        img.save(bmp_io, format="BMP")
+        bmp_io.seek(0)
+
+        # Return BMP response
+        return Response(content=bmp_io.getvalue(), media_type="image/bmp")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
