@@ -86,6 +86,9 @@ def get_latest_scheduled_image():
 
         # Convert to BMP using Pillow (only if needed)
         img = Image.open(io.BytesIO(image_data))
+        # Resize to 1200x825 while maintaining aspect ratio
+        img = img.resize((1200, 825), Image.LANCZOS)
+
         if img.format != "BMP":
             img = img.convert("RGB")  # Convert to 24-bit BMP
 
