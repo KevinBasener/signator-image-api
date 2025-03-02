@@ -63,6 +63,42 @@ async def upload_scheduled_image(file: UploadFile = File(...), scheduled_time: s
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/schedule/latest")
+def get_latest_scheduled_image():
+    try:
+        # Query the latest uploaded image from DynamoDB
+        response = table.scan()
+        items = response.get("Items", [])
+
+        if not items:
+            raise HTTPException(status_code=404, detail="No images found")
+
+        # Sort by scheduled_time (latest first)
+        latest_item = sorted(items, key=lambda x: x["scheduled_time"], reverse=True)[0]
+        image_url = latest_item["image_url"]
+
+        # Extract S3 object key from the URL
+        object_key = image_url.split(f"{S3_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/")[-1]
+
+        # Get image from S3
+        s3_response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=object_key)
+        image_data = s3_response["Body"].read()
+
+        # Convert to BMP using Pillow (only if needed)
+        img = Image.open(io.BytesIO(image_data))
+        if img.format != "BMP":
+            img = img.convert("RGB")  # Convert to 24-bit BMP
+
+        # Save to a BytesIO buffer
+        bmp_io = io.BytesIO()
+        img.save(bmp_io, format="BMP")
+        bmp_io.seek(0)
+
+        # Return BMP response
+        return Response(content=bmp_io.getvalue(), media_type="image/bmp")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/schedule/{image_id}")
 def get_scheduled_image(image_id: str):
